@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Lyrical Architecture of The Beths</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Auckland Sunset -->
+    <!-- Application Structure Plan: A single-page, multi-section layout designed for non-linear exploration. The structure includes: 1) A Hero section for introduction. 2) An interactive "Thematic Explorer" using cards to detail lyrical themes, allowing users to select and dive into specific topics. 3) A "Lyrical Craft" section with interactive elements to explain songwriting techniques. 4) An "Album Evolution" section with a Chart.js visualization to show how themes are distributed across albums. 5) A visual "Songwriting Process" diagram built with HTML/CSS. This thematic, task-oriented structure was chosen over a linear report format to empower users to discover connections between different aspects of The Beths' work (e.g., a theme and the craft used to express it) in an intuitive, self-directed way, which is more engaging for music analysis. -->
+    <!-- Visualization & Content Choices: 
+        - Album Evolution: Report Info (Table 1: Dominant Themes per Album) -> Goal (Compare change over time) -> Viz (Interactive Bar Chart) -> Interaction (Click on album title to highlight its themes on the chart) -> Justification (A chart provides a quick, comparative overview of lyrical focus shifts, which is a core finding of the report) -> Library (Chart.js/Canvas).
+        - Lyrical Themes/Craft: Report Info (Sections II & III) -> Goal (Inform & Organize) -> Presentation (Interactive Cards/Accordions) -> Interaction (Click to reveal detailed text and examples) -> Justification (Breaks down dense text into manageable, user-selected chunks, improving readability and engagement) -> Method (HTML/CSS/JS).
+        - Songwriting Process: Report Info (Section IV) -> Goal (Organize & Inform) -> Presentation (HTML/CSS Flowchart) -> Interaction (Static visual) -> Justification (A visual diagram is clearer for representing a multi-step process than a paragraph of text) -> Method (HTML/Tailwind Flexbox).
+        - CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #FDFBF8;
+            color: #4B423B;
+        }
+        .bg-primary { background-color: #FDFBF8; }
+        .bg-secondary { background-color: #F4E9DE; }
+        .text-accent { color: #D97757; }
+        .border-accent { border-color: #D97757; }
+        .bg-accent { background-color: #D97757; }
+        .bg-accent-light { background-color: #EBC0B0; }
+        .text-dark { color: #4B423B; }
+        .text-light { color: #6D635A; }
+
+        .nav-link {
+            transition: color 0.3s ease, border-color 0.3s ease;
+            border-bottom: 2px solid transparent;
+        }
+        .nav-link:hover, .nav-link.active {
+            color: #D97757;
+            border-bottom-color: #D97757;
+        }
+        .theme-card, .craft-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .theme-card:hover, .craft-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        .content-hidden {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+            opacity: 0;
+        }
+        .content-visible {
+            max-height: 1000px;
+            transition: max-height 0.9s cubic-bezier(0.4, 0, 0.2, 1);
+            opacity: 1;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 400px;
+            max-height: 50vh;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 450px;
+            }
+        }
+    </style>
+</head>
+<body class="bg-primary text-dark">
+
+    <header class="sticky top-0 bg-primary/80 backdrop-blur-lg z-50 shadow-sm">
+        <nav class="container mx-auto px-6 py-3">
+            <div class="flex justify-between items-center">
+                <h1 class="text-xl font-bold text-accent">The Beths' Lyrics</h1>
+                <div class="hidden md:flex space-x-8">
+                    <a href="#themes" class="nav-link font-semibold pb-1">Themes</a>
+                    <a href="#craft" class="nav-link font-semibold pb-1">Craft</a>
+                    <a href="#evolution" class="nav-link font-semibold pb-1">Evolution</a>
+                    <a href="#process" class="nav-link font-semibold pb-1">Process</a>
+                </div>
+                 <button id="mobile-menu-button" class="md:hidden p-2 rounded-md text-dark hover:bg-secondary focus:outline-none">
+                    <span class="block w-6 h-0.5 bg-dark mb-1"></span>
+                    <span class="block w-6 h-0.5 bg-dark mb-1"></span>
+                    <span class="block w-6 h-0.5 bg-dark"></span>
+                </button>
+            </div>
+             <div id="mobile-menu" class="hidden md:hidden mt-4">
+                <a href="#themes" class="block py-2 px-4 text-sm hover:bg-secondary rounded-md">Themes</a>
+                <a href="#craft" class="block py-2 px-4 text-sm hover:bg-secondary rounded-md">Craft</a>
+                <a href="#evolution" class="block py-2 px-4 text-sm hover:bg-secondary rounded-md">Evolution</a>
+                <a href="#process" class="block py-2 px-4 text-sm hover:bg-secondary rounded-md">Process</a>
+            </div>
+        </nav>
+    </header>
+
+    <main>
+        <section id="hero" class="container mx-auto px-6 py-16 text-center">
+            <h2 class="text-4xl md:text-5xl font-bold text-dark mb-4">The Lyrical Architecture of The Beths</h2>
+            <p class="text-lg text-light max-w-3xl mx-auto">
+                An interactive exploration of the lyrical themes, creative craft, and songwriting process of the New Zealand indie rock band. This analysis deconstructs how Elizabeth Stokes' candid songwriting transforms personal anxiety and relationship dynamics into universally resonant art.
+            </p>
+        </section>
+
+        <section id="themes" class="py-16 bg-secondary">
+            <div class="container mx-auto px-6">
+                <div class="text-center mb-12">
+                    <h3 class="text-3xl font-bold mb-2">Core Lyrical Themes</h3>
+                    <p class="text-light max-w-2xl mx-auto">The Beths' songwriting consistently explores personal anxieties and the intricate dynamics of human relationships. The music's upbeat, energetic style often serves as a deliberate counterpoint to the vulnerable lyrics, creating a unique emotional tension. Click on a theme to explore exemplary songs and analysis.</p>
+                </div>
+
+                <div id="theme-cards-container" class="grid md:grid-cols-2 gap-8">
+                </div>
+            </div>
+        </section>
+
+        <section id="craft" class="py-16 bg-primary">
+            <div class="container mx-auto px-6">
+                <div class="text-center mb-12">
+                    <h3 class="text-3xl font-bold mb-2">The Craft of the Lyrics</h3>
+                    <p class="text-light max-w-2xl mx-auto">The impact of The Beths' music is tied to the meticulous craft of their lyrics. Elizabeth Stokes employs several key techniques that give their songs depth and relatability. Explore the core components of her lyrical style below.</p>
+                </div>
+                <div id="craft-cards-container" class="space-y-4 max-w-4xl mx-auto">
+                </div>
+            </div>
+        </section>
+
+        <section id="evolution" class="py-16 bg-secondary">
+            <div class="container mx-auto px-6">
+                <div class="text-center mb-12">
+                    <h3 class="text-3xl font-bold mb-2">Evolution of Themes Across Albums</h3>
+                    <p class="text-light max-w-2xl mx-auto">The Beths' discography shows a clear progression in lyrical maturity, moving from the anxieties of new love to reflections on its aftermath and broader existential questions. This chart visualizes the dominant lyrical themes present in each major release. Click an album title to highlight its themes.</p>
+                </div>
+                <div class="bg-primary p-4 sm:p-8 rounded-lg shadow-md">
+                     <div class="flex flex-wrap justify-center gap-2 mb-6">
+                        <button class="album-toggle-btn px-3 py-1 text-sm font-semibold rounded-full bg-accent-light text-dark transition-transform" data-album="Future Me Hates Me">Future Me Hates Me</button>
+                        <button class="album-toggle-btn px-3 py-1 text-sm font-semibold rounded-full bg-accent-light text-dark transition-transform" data-album="Jump Rope Gazers">Jump Rope Gazers</button>
+                        <button class="album-toggle-btn px-3 py-1 text-sm font-semibold rounded-full bg-accent-light text-dark transition-transform" data-album="Expert In A Dying Field">Expert In A Dying Field</button>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="themesChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="process" class="py-16 bg-primary">
+            <div class="container mx-auto px-6">
+                 <div class="text-center mb-12">
+                    <h3 class="text-3xl font-bold mb-2">The Songwriting Process</h3>
+                    <p class="text-light max-w-2xl mx-auto">Elizabeth Stokes's process is a blend of introspection, structured technique, and collaboration. It often begins with instrumental ideas, over which lyrics and melodies are crafted to create a deliberate contrast between music and text, resulting in their signature "happy-sad" dynamic.</p>
+                </div>
+
+                <div class="flex flex-col md:flex-row items-center justify-center gap-4 md:gap-0 text-center">
+                    <div class="flex flex-col items-center">
+                        <div class="w-40 h-20 bg-secondary rounded-lg flex items-center justify-center p-2 shadow">
+                            <p class="font-semibold">1. Introspection & Idea Capture</p>
+                        </div>
+                        <p class="text-sm text-light mt-2 max-w-xs">Using notebooks or phone notes to process emotions and ideas.</p>
+                    </div>
+                    <div class="w-1 h-10 md:w-16 md:h-1 bg-accent-light"></div>
+                    <div class="flex flex-col items-center">
+                        <div class="w-40 h-20 bg-secondary rounded-lg flex items-center justify-center p-2 shadow">
+                           <p class="font-semibold">2. Instrumental Demo First</p>
+                        </div>
+                        <p class="text-sm text-light mt-2 max-w-xs">Recording instrumental tracks to establish a musical mood.</p>
+                    </div>
+                    <div class="w-1 h-10 md:w-16 md:h-1 bg-accent-light"></div>
+                    <div class="flex flex-col items-center">
+                        <div class="w-40 h-20 bg-secondary rounded-lg flex items-center justify-center p-2 shadow">
+                            <p class="font-semibold">3. Lyric & Melody Crafting</p>
+                        </div>
+                        <p class="text-sm text-light mt-2 max-w-xs">Writing lyrics and melodies over demos, often in contrast to the music.</p>
+                    </div>
+                     <div class="w-1 h-10 md:w-16 md:h-1 bg-accent-light"></div>
+                     <div class="flex flex-col items-center">
+                        <div class="w-40 h-20 bg-secondary rounded-lg flex items-center justify-center p-2 shadow">
+                            <p class="font-semibold">4. Band Collaboration</p>
+                        </div>
+                         <p class="text-sm text-light mt-2 max-w-xs">Arrangement and vocal harmonies are refined with the full band.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+    
+    <footer class="bg-secondary mt-16">
+        <div class="container mx-auto px-6 py-8 text-center text-light">
+            <p>Interactive analysis based on the report "The Lyrical Architecture of The Beths."</p>
+            <p class="text-sm mt-2">Created as a single-page application to explore the nuances of their songwriting.</p>
+        </div>
+    </footer>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        
+        const themesData = [
+            {
+                title: 'Anxiety, Overthinking & Self-Doubt',
+                icon: '🧠',
+                description: 'A candid exploration of internal monologues steeped in apprehension and a pre-emptive fear of unfavorable outcomes.',
+                examples: [
+                    { song: 'Future Me Hates Me', lyric: 'Future heartbreak, future headaches, wide-eyed nights late lying awake...' },
+                    { song: 'I\'m Not Getting Excited', lyric: 'I\'m not getting excited, \'cause the air is heavy and I know that when it breaks I\'ll be right in it.' },
+                    { song: 'Knees Deep', lyric: 'I wish that I was brave enough to dive in / But I never have been and never will be.' },
+                    { song: 'Silence is Golden', lyric: 'The sound, the sound, the sound, the sound / I can feel it taking over now.' }
+                ]
+            },
+            {
+                title: 'Relationships & Their Aftermath',
+                icon: '💔',
+                description: 'The intricate complexities of human connection, particularly the dissolution of relationships and the emotional fallout.',
+                examples: [
+                    { song: 'Expert In A Dying Field', lyric: 'Love is learned over time \'til you\'re an expert in a dying field.' },
+                    { song: 'Your Side', lyric: 'I get irrationally upset when you leave for the airport / And I can\'t stand to be on your side of the planet.' },
+                    { song: 'A Passing Rain', lyric: 'You were a port in a storm I was caught in / You were the light in a tunnel that was darkening.' },
+                    { song: 'Watching the Credits', lyric: 'It\'s just a story I don\'t quite believe / Full of plotholes and constant monotony.' }
+                ]
+            },
+            {
+                title: 'Identity & Self-Reflection',
+                icon: '👤',
+                description: 'Lyrics that turn inward to explore personal identity, self-awareness, and the often challenging process of self-acceptance.',
+                examples: [
+                    { song: 'Metal', lyric: 'And I know I\'m a collaboration / Bacteria, carbon and light.' },
+                    { song: 'Lying in the Sun', lyric: 'The water\'s way over my head / I\'m never coming up for air again.' },
+                    { song: 'Great No One', lyric: 'Caught in between the ache and the apathy / But seclusion\'s pleasing is an illusion, you see.' },
+                    { song: 'Happy Unhappy', lyric: 'I was happy unhappy. But now I\'m overthrown. Wish my heart were really made of stone.' }
+                ]
+            },
+            {
+                title: 'The Passage of Time & Change',
+                icon: '⏳',
+                description: 'Grappling with the transient nature of time, the inevitability of change, and looking back at the past or anticipating the future.',
+                examples: [
+                    { song: 'Change in the Weather', lyric: 'Maybe things will get better but I barely believe it when I\'m staring straight at it.' },
+                    { song: '2am', lyric: 'Do you feel it? Feel it like you did back then? 2am. We were pounding the pavement.' }
+                ]
+            }
+        ];
+
+        const craftData = [
+            {
+                title: 'Candidness and Vulnerability',
+                description: 'Stokes employs an open-hearted style that invites listeners directly into her internal world, sharing anxieties and struggles without pretense. This intentional transparency translates personal experiences into universal understanding.',
+                example: 'Stokes states her intention is to "work it out for myself so that I can be understood."'
+            },
+            {
+                title: 'Masterful Use of Metaphor',
+                description: 'Lyrics are elevated by extended, evocative metaphors. These devices add intellectual depth and allow for multi-layered interpretations, serving as conceptual anchors for complex emotions.',
+                example: 'In "Expert in a Dying Field", the metaphor encapsulates intimacy becoming obsolete after a relationship ends.'
+            },
+            {
+                title: 'Wordplay and Conversational Nuance',
+                description: 'A compelling blend of conversational flow and astute wordplay creates a dynamic lyrical experience. This gives the songs a sense of intimacy and direct address, while clever phrasing avoids cliché.',
+                example: 'The title "Future Me Hates Me" itself is a powerful, ironic phrase that embodies pre-emptive anxiety.'
+            },
+            {
+                title: 'Structure and Rhyme',
+                description: 'Embracing the "limitations" of classic pop song structures and rhyme as a creative framework. Stokes finds that these parameters are useful for sparking ideas and enhancing clarity.',
+                example: 'Her affection for "the form of a classic pop song... like B-A-B-A" results in songs that are accessible yet artfully constructed.'
+            }
+        ];
+
+        const themesChartData = {
+            labels: ['Anxiety & Self-Doubt', 'Relationships', 'Identity & Growth', 'Time & Change'],
+            datasets: [
+                {
+                    label: 'Future Me Hates Me',
+                    data: [4, 3, 2, 1],
+                    backgroundColor: 'rgba(217, 119, 87, 0.4)',
+                    borderColor: 'rgba(217, 119, 87, 1)',
+                    borderWidth: 1,
+                    hidden: false,
+                },
+                {
+                    label: 'Jump Rope Gazers',
+                    data: [3, 4, 3, 2],
+                     backgroundColor: 'rgba(75, 126, 145, 0.4)',
+                    borderColor: 'rgba(75, 126, 145, 1)',
+                    borderWidth: 1,
+                    hidden: false,
+                },
+                {
+                    label: 'Expert In A Dying Field',
+                    data: [4, 5, 4, 4],
+                    backgroundColor: 'rgba(141, 100, 84, 0.4)',
+                    borderColor: 'rgba(141, 100, 84, 1)',
+                    borderWidth: 1,
+                    hidden: false,
+                }
+            ]
+        };
+
+        const themeCardsContainer = document.getElementById('theme-cards-container');
+        themesData.forEach(theme => {
+            const card = document.createElement('div');
+            card.className = 'theme-card bg-primary rounded-lg shadow-md overflow-hidden cursor-pointer';
+            let examplesHtml = theme.examples.map(ex => `
+                <div class="border-t border-secondary/50 pt-3 mt-3">
+                    <p class="font-semibold text-dark">${ex.song}</p>
+                    <p class="text-sm text-light italic">"${ex.lyric}"</p>
+                </div>
+            `).join('');
+
+            card.innerHTML = `
+                <div class="p-6">
+                    <h4 class="text-xl font-bold mb-2 flex items-center">
+                        <span class="text-2xl mr-3">${theme.icon}</span>
+                        ${theme.title}
+                    </h4>
+                    <p class="text-light">${theme.description}</p>
+                </div>
+                <div class="px-6 pb-6 content-hidden">
+                    <h5 class="font-bold text-dark mb-2">Key Examples:</h5>
+                    ${examplesHtml}
+                </div>
+            `;
+            themeCardsContainer.appendChild(card);
+            card.addEventListener('click', () => {
+                const content = card.querySelector('.content-hidden, .content-visible');
+                content.classList.toggle('content-hidden');
+                content.classList.toggle('content-visible');
+            });
+        });
+
+        const craftCardsContainer = document.getElementById('craft-cards-container');
+        craftData.forEach(craft => {
+            const card = document.createElement('div');
+            card.className = 'craft-card border border-secondary rounded-lg overflow-hidden';
+            card.innerHTML = `
+                <div class="p-4 cursor-pointer flex justify-between items-center craft-card-header hover:bg-secondary/50">
+                    <h4 class="font-bold text-lg">${craft.title}</h4>
+                    <span class="transform transition-transform text-accent font-bold text-2xl ">+</span>
+                </div>
+                <div class="px-4 content-hidden">
+                    <div class="py-4 border-t border-secondary">
+                        <p class="text-light mb-3">${craft.description}</p>
+                        <p class="text-sm bg-secondary p-3 rounded-md italic text-dark"><strong>Example:</strong> ${craft.example}</p>
+                    </div>
+                </div>
+            `;
+            craftCardsContainer.appendChild(card);
+
+            const header = card.querySelector('.craft-card-header');
+            const content = card.querySelector('.content-hidden, .content-visible');
+            const icon = card.querySelector('span');
+
+            header.addEventListener('click', () => {
+                const isVisible = content.classList.contains('content-visible');
+                content.classList.toggle('content-hidden');
+                content.classList.toggle('content-visible');
+                icon.classList.toggle('rotate-45', !isVisible);
+            });
+        });
+
+        const ctx = document.getElementById('themesChart').getContext('2d');
+        const themesChart = new Chart(ctx, {
+            type: 'bar',
+            data: themesChartData,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                indexAxis: 'y',
+                scales: {
+                    x: {
+                        stacked: true,
+                        grid: { color: 'rgba(0,0,0,0.05)' },
+                        ticks: {
+                           display: false
+                        }
+                    },
+                    y: {
+                        stacked: true,
+                         grid: { display: false },
+                         ticks: {
+                           font: { size: 14 }
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return ` ${context.dataset.label}: Prevalence score of ${context.raw}`;
+                            }
+                        }
+                    },
+                    title: {
+                        display: true,
+                        text: 'Relative Thematic Prevalence (Illustrative)'
+                    }
+                }
+            }
+        });
+
+        document.querySelectorAll('.album-toggle-btn').forEach(button => {
+            button.addEventListener('click', () => {
+                const albumLabel = button.dataset.album;
+                themesChart.data.datasets.forEach((dataset, i) => {
+                    dataset.hidden = dataset.label !== albumLabel;
+                });
+                themesChart.update();
+
+                document.querySelectorAll('.album-toggle-btn').forEach(btn => btn.classList.remove('bg-accent', 'text-white', 'scale-110'));
+                button.classList.add('bg-accent', 'text-white', 'scale-110');
+            });
+        });
+        
+        const mobileMenuButton = document.getElementById('mobile-menu-button');
+        const mobileMenu = document.getElementById('mobile-menu');
+        mobileMenuButton.addEventListener('click', () => {
+            mobileMenu.classList.toggle('hidden');
+        });
+
+        mobileMenu.addEventListener('click', () => {
+             mobileMenu.classList.add('hidden');
+        });
+
+        const navLinks = document.querySelectorAll('.nav-link');
+        const sections = document.querySelectorAll('main section');
+        window.addEventListener('scroll', () => {
+            let current = '';
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                if (pageYOffset >= sectionTop - 60) {
+                    current = section.getAttribute('id');
+                }
+            });
+
+            navLinks.forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('href').includes(current)) {
+                    link.classList.add('active');
+                }
+            });
+        });
+
+    });
+    </script>
+</body>
+</html>
