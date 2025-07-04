@@ -3,18 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Lyrical Architecture of The Beths</title>
+    <title>The Beths: Lyrical Architecture & Generator</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <!-- Chosen Palette: Auckland Sunset -->
-    <!-- Application Structure Plan: A single-page, multi-section layout designed for non-linear exploration. The structure includes: 1) A Hero section for introduction. 2) An interactive "Thematic Explorer" using cards to detail lyrical themes, allowing users to select and dive into specific topics. 3) A "Lyrical Craft" section with interactive elements to explain songwriting techniques. 4) An "Album Evolution" section with a Chart.js visualization to show how themes are distributed across albums. 5) A visual "Songwriting Process" diagram built with HTML/CSS. This thematic, task-oriented structure was chosen over a linear report format to empower users to discover connections between different aspects of The Beths' work (e.g., a theme and the craft used to express it) in an intuitive, self-directed way, which is more engaging for music analysis. -->
+    <!-- Application Structure Plan: A single-page, multi-section layout combining analysis and generation. It features a header with navigation, an interactive "Thematic Explorer," a "Lyrical Craft" section, an "Album Evolution" chart, a visual "Songwriting Process" diagram, and a new "Lyric Generator" section. The structure is designed to allow users to seamlessly transition from understanding the band's lyrical style to actively experimenting with it, providing a holistic and interactive experience. -->
     <!-- Visualization & Content Choices: 
-        - Album Evolution: Report Info (Table 1: Dominant Themes per Album) -> Goal (Compare change over time) -> Viz (Interactive Bar Chart) -> Interaction (Click on album title to highlight its themes on the chart) -> Justification (A chart provides a quick, comparative overview of lyrical focus shifts, which is a core finding of the report) -> Library (Chart.js/Canvas).
-        - Lyrical Themes/Craft: Report Info (Sections II & III) -> Goal (Inform & Organize) -> Presentation (Interactive Cards/Accordions) -> Interaction (Click to reveal detailed text and examples) -> Justification (Breaks down dense text into manageable, user-selected chunks, improving readability and engagement) -> Method (HTML/CSS/JS).
-        - Songwriting Process: Report Info (Section IV) -> Goal (Organize & Inform) -> Presentation (HTML/CSS Flowchart) -> Interaction (Static visual) -> Justification (A visual diagram is clearer for representing a multi-step process than a paragraph of text) -> Method (HTML/Tailwind Flexbox).
+        - Album Evolution: Interactive Bar Chart (Chart.js/Canvas).
+        - Lyrical Themes/Craft: Interactive Cards/Accordions (HTML/CSS/JS).
+        - Songwriting Process: HTML/CSS Flowchart (HTML/Tailwind Flexbox).
+        - Lyric Generation: Dynamic text output (JavaScript with Gemini API).
+        - Input Controls: Dropdown, text input (HTML/CSS/JS).
         - CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
     <style>
         body {
@@ -71,6 +73,19 @@
                 height: 450px;
             }
         }
+        /* Styles for Lyric Generator */
+        .btn-primary {
+            @apply px-6 py-3 rounded-full font-semibold transition-all duration-300 ease-in-out;
+            @apply bg-accent text-white hover:bg-accent-light hover:text-dark shadow-md;
+        }
+        .input-field {
+            @apply w-full p-3 rounded-md border border-secondary focus:ring-2 focus:ring-accent-light focus:border-transparent transition-colors;
+            @apply bg-primary text-dark;
+        }
+        .textarea-field {
+            @apply w-full p-3 rounded-md border border-secondary focus:ring-2 focus:ring-accent-light focus:border-transparent transition-colors;
+            @apply bg-primary text-dark min-h-[200px] resize-y;
+        }
     </style>
 </head>
 <body class="bg-primary text-dark">
@@ -78,12 +93,13 @@
     <header class="sticky top-0 bg-primary/80 backdrop-blur-lg z-50 shadow-sm">
         <nav class="container mx-auto px-6 py-3">
             <div class="flex justify-between items-center">
-                <h1 class="text-xl font-bold text-accent">The Beths' Lyrics</h1>
+                <h1 class="text-xl font-bold text-accent">The Beths' Lyrical World</h1>
                 <div class="hidden md:flex space-x-8">
                     <a href="#themes" class="nav-link font-semibold pb-1">Themes</a>
                     <a href="#craft" class="nav-link font-semibold pb-1">Craft</a>
                     <a href="#evolution" class="nav-link font-semibold pb-1">Evolution</a>
                     <a href="#process" class="nav-link font-semibold pb-1">Process</a>
+                    <a href="#lyric-generator" class="nav-link font-semibold pb-1">Generator</a>
                 </div>
                  <button id="mobile-menu-button" class="md:hidden p-2 rounded-md text-dark hover:bg-secondary focus:outline-none">
                     <span class="block w-6 h-0.5 bg-dark mb-1"></span>
@@ -96,6 +112,7 @@
                 <a href="#craft" class="block py-2 px-4 text-sm hover:bg-secondary rounded-md">Craft</a>
                 <a href="#evolution" class="block py-2 px-4 text-sm hover:bg-secondary rounded-md">Evolution</a>
                 <a href="#process" class="block py-2 px-4 text-sm hover:bg-secondary rounded-md">Process</a>
+                <a href="#lyric-generator" class="block py-2 px-4 text-sm hover:bg-secondary rounded-md">Generator</a>
             </div>
         </nav>
     </header>
@@ -188,12 +205,52 @@
                 </div>
             </div>
         </section>
+
+        <section id="lyric-generator" class="py-16 bg-secondary">
+            <div class="container mx-auto px-6">
+                 <section id="generator-intro" class="text-center mb-12">
+                    <h2 class="text-3xl md:text-4xl font-bold text-dark mb-4">Craft Your Own Beths-Like Lyrics</h2>
+                    <p class="text-lg text-light max-w-3xl mx-auto">
+                        Select a core lyrical category and add keywords to generate a short song lyric in the distinctive style of Elizabeth Stokes from The Beths. Experiment with themes of anxiety, relationships, identity, and time.
+                    </p>
+                </section>
+
+                <section id="lyric-form" class="bg-secondary p-8 rounded-lg shadow-lg max-w-2xl mx-auto">
+                    <div class="mb-6">
+                        <label for="category-select" class="block text-light text-sm font-semibold mb-2">Choose a Core Lyrical Category:</label>
+                        <select id="category-select" class="input-field">
+                            <option value="Anxiety, Overthinking & Self-Doubt">Anxiety, Overthinking & Self-Doubt</option>
+                            <option value="Relationships & Their Aftermath">Relationships & Their Aftermath</option>
+                            <option value="Identity, Self-Reflection & Personal Growth">Identity, Self-Reflection & Personal Growth</option>
+                            <option value="The Passage of Time & Change">The Passage of Time & Change</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-6">
+                        <label for="keywords-input" class="block text-light text-sm font-semibold mb-2">Add Keywords (e.g., 'rainy day', 'old photo', 'missed call'):</label>
+                        <input type="text" id="keywords-input" class="input-field" placeholder="Enter comma-separated keywords">
+                    </div>
+
+                    <div class="text-center">
+                        <button id="generate-btn" class="btn-primary">Generate Lyrics</button>
+                        <p id="loading-indicator" class="mt-4 text-accent font-semibold hidden">Generating...</p>
+                    </div>
+                </section>
+
+                <section id="generated-lyrics-section" class="mt-12">
+                    <h3 class="text-2xl font-bold text-center mb-6">Your Generated Lyrics:</h3>
+                    <div id="lyrics-output" class="bg-primary p-6 rounded-lg shadow-md border border-secondary text-dark whitespace-pre-wrap min-h-[250px] flex items-center justify-center text-center italic text-light">
+                        Your Beths-like lyrics will appear here.
+                    </div>
+                </section>
+            </div>
+        </section>
     </main>
     
     <footer class="bg-secondary mt-16">
         <div class="container mx-auto px-6 py-8 text-center text-light">
-            <p>Interactive analysis based on the report "The Lyrical Architecture of The Beths."</p>
-            <p class="text-sm mt-2">Created as a single-page application to explore the nuances of their songwriting.</p>
+            <p>Interactive analysis and generator inspired by the songwriting of The Beths.</p>
+            <p class="text-sm mt-2">Powered by AI analysis of their lyrical architecture.</p>
         </div>
     </footer>
 
@@ -445,6 +502,72 @@
             });
         });
 
+        // Lyric Generator Logic
+        const categorySelect = document.getElementById('category-select');
+        const keywordsInput = document.getElementById('keywords-input');
+        const generateBtn = document.getElementById('generate-btn');
+        const loadingIndicator = document.getElementById('loading-indicator');
+        const lyricsOutput = document.getElementById('lyrics-output');
+
+        if (generateBtn) { // Ensure elements exist before adding listener
+            generateBtn.addEventListener('click', generateLyrics);
+        }
+
+        async function generateLyrics() {
+            const category = categorySelect.value;
+            const keywords = keywordsInput.value.trim();
+
+            if (!keywords) {
+                lyricsOutput.textContent = "Please enter some keywords to help generate the lyrics!";
+                return;
+            }
+
+            loadingIndicator.classList.remove('hidden');
+            lyricsOutput.textContent = ''; // Clear previous lyrics
+
+            const prompt = `You are a lyricist in the style of Elizabeth Stokes from The Beths. Your task is to write a short song lyric (2-3 verses, 1 chorus, no bridge needed) based on the following category and keywords. Emphasize candidness, vulnerability, subtle metaphors, and a conversational tone. The lyrics should often contrast with an implied upbeat, energetic musical style, creating a 'happy-sad' tension. Avoid clichés.
+            
+            Category: ${category}
+            Keywords: ${keywords}
+            
+            Examples of The Beths' style:
+            - 'Future heartbreak, future headaches, wide-eyed nights late lying awake / With future cold shakes from stupid mistakes.' (Anxiety)
+            - 'Love is learned over time 'til you're an expert in a dying field.' (Relationships, Metaphor)
+            - 'I was happy unhappy. But now I'm overthrown. Wish my heart were really made of stone.' (Identity, Paradox)
+            - 'Do you feel it? Feel it like you did back then? 2am. We were pounding the pavement.' (Time, Nostalgia)
+            
+            Generate only the lyrics, no introductions or explanations.`;
+
+            try {
+                let chatHistory = [];
+                chatHistory.push({ role: "user", parts: [{ text: prompt }] });
+                const payload = { contents: chatHistory };
+                const apiKey = ""; 
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await response.json();
+
+                if (result.candidates && result.candidates.length > 0 &&
+                    result.candidates[0].content && result.candidates[0].content.parts &&
+                    result.candidates[0].content.parts.length > 0) {
+                    const text = result.candidates[0].content.parts[0].text;
+                    lyricsOutput.textContent = text;
+                } else {
+                    lyricsOutput.textContent = "Could not generate lyrics. Please try again with different keywords.";
+                }
+            } catch (error) {
+                console.error('Error generating lyrics:', error);
+                lyricsOutput.textContent = "An error occurred while generating lyrics. Please try again.";
+            } finally {
+                loadingIndicator.classList.add('hidden');
+            }
+        }
     });
     </script>
 </body>
